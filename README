@@ -1,0 +1,260 @@
+--------------------------------------------------------------------------------
+GStreamer Prototyping
+
+  GStreamer and GTK examples, and source code for the prototype GStreamer/GTK
+  applications described by the specifications below.
+
+--------------------------------------------------------------------------------
+See the "gstproto" OneNote for additional info
+
+https://biamp-my.sharepoint.com/:o:/p/sean_allen/EodRkZq5kKpBgoDEpaovIM8BnN14i2Xu7qPpPiC5bOv-MA?e=EJDxxo
+
+--------------------------------------------------------------------------------
+Functional Specification (FSPEC)
+
+Prototype 0 (P0)
+- One button that cycles through audiovisualizer types
+- Use all of GStreamer's available audiovisualizer types (there are currently 4)
+- Output audio to a speaker
+- Use a simple generated test audio input
+
+Acceptance Criteria
+
+P1
+- P0, but replace simplistic button UI with a more realistic one
+- Have a dropdown menu that enumerates the audiovisualizers
+- In addition to the dropdown menu, there is a button for each audiovisualizer
+- There is a view of the audiovisualizer that changes as the user makes
+  selections
+
+P2
+- P1 but use a more interesting input - an electric guitar
+
+Stretch 0 (S0)
+- Expose raw data to a simple external application
+- The application can just read and write without changing the data
+- Output audio to a speaker
+- Use a simple generated test audio input
+
+--------------------------------------------------------------------------------
+Design Specification (DSPEC)
+
+P0
+
+- Modify the "Changing Elements in a Pipeline Example"
+
+  - Use a button instead of a timer to control transition, and embed the video
+    from the GStreamer application ina GTK window
+
+    - Refer back to "GStreamer Basic Tutorial 5" to see how to use GTK and
+      GStreamer in the same C program. The main point is telling GStreamer to
+      output video to a specific window.
+
+    - Refer to the GTK button example to see how to create a simple button
+      with GTK and attach a callback function to it for click events
+
+    - Refer back to "GStreamer Basic Tutorial 5" to see how to
+
+        - Use the message bus to pass messages between GTK UI elements and the
+          GStreamer application.
+
+        - Use signals to subscribe to register only to specific set of chosen
+          messages. This is just good practice.
+
+  - Use a test audio source and audio visualization elements instead of a
+    test video source and video effects.
+
+- Build a dynamic GStreamer pipeline. Do not create all the gstreamer elements
+  ahead of time and simply control the flow in response to user input. Instead, 
+  dynamically change the current audiovisualizer element out for a new one.
+  The reason is this: dynamic pipelines scale better. They are memory
+  efficient even for large pipelines with lots of pathways, so it is good
+  practice to build pipelines dynamically.
+
+  P0.0
+  
+  - Combine the button click example and the "Changing Elements..." example.
+    Put the button code in places that make sense based on "GStreamer Basic
+    Tutorial 5". Pay attention to
+      - where GTK resources are initialized and destroyed.
+      - where g_main_loops are started. note there is a g_main_loop hidden
+        inside gtk_main
+      - 
+    Note that the buttonclick example uses gtk_main() instead of explicitly
+    creating a GMainLoop. But the "loop" argument to gst_bust_add_watch
+    can be replaced with a NULL pointer. In that case, the default GLib
+    main context will be used when gtk_main() is called in the main
+    function. However, we can't call gtk_main_quit() inside of callback
+    functions. That is, we can't simply replace "g_main_loop_quit(loop)"
+    with gtk_main_quit() in callback functions in the "Changing the
+    pipeline..." example. Instead, we have to push a, e.g., "quit" application
+    message onto the bus, and read it.
+
+    While there is no explicit need to use "gst_bus_add_signal_watch"
+    instead of "gst_bus_add_watch", it may be helpful to do so, since
+    "Tutorial 5" uses "gst_bus_add_signal_watch", which might make the
+    message parsing example in "Tutorial 5" easier to follow.
+
+  - Compile it
+
+  - Run it
+
+  - Confirm both examples still work. Obviously, they won't be talking to each
+    other yet!
+
+  P0.1
+
+  - Modify P0.0 so that instead of writing a message to standard output the
+    button click handler pushes a message onto the bus. The modified program
+    should not print anything when the button is clicked, so you can remove
+    that code. Be careful not to remove code you need!
+  
+  - Compile it
+
+  - Run it
+
+  - Confirm behavior
+
+  - Further modify P0.0 so it subscribes to messages from the button instead
+    of just error messages. In the switch case block corresponding to button
+    click messages, write a test messages to standard output.
+
+  - Compile it
+
+  - Run it
+
+  - Confirm behavior. Note the videotestsrc should still be playing, and the
+    effect should still be changing every second. 
+
+  P0.2
+
+  - Modify P0.1 so that instead of printing a message to standard output on
+    button click, while separately changing the video effect every second, it
+    changes the video effect on button click. At this point, remove the code
+    that changes the effect every second. Be careful not to remove code you
+    need!
+
+  - Compile it
+
+  - Run it
+
+  - Confirm behavior. At this point, the videotestsrc should be playing, but
+    the video effect should no longer be changing every second. Instead when
+    you click the button the effect with change. No message will show when you
+    click the button.
+
+  P0.3
+
+  - Modify P0.2 so that it uses audio elements instead of video elements.
+
+      - Use audio visualization elements instead of video effect elements.
+
+      - Use audioconvert instead of videoconvert
+
+      - Use autoaudiosink instead of autovideosink
+
+      - Use audiotestsrc instead of videotestsrc
+
+  - Compile it
+
+  - Run it
+
+  - Confirm behavior
+
+  - Confirm behavior. You should see an audio visualization of a sine wave
+    (for the waveform audiovisualization element, it will actually be
+    visualized as a sine wave). The type of audio visualization should change
+    when you click the button.
+
+P1
+
+- Arrange the dropdown menu (Menu), menu items (MenuItem0-3), buttons
+  (Button0-3), and audiovisualizer (Visual) in the application's single window
+  as shown in the file "SKETCH". 
+
+P2
+
+- Use JACK Audio Connection Kit, qjackctl, and GStreamer's jackaudiosrc and
+  jackaudiosink to facilitate feeding electric guitar input into the
+  application.
+
+S0
+
+- Need do do more of the tutorials
+
+--------------------------------------------------------------------------------
+
+Developers
+
+elliott.watson@biamp.com
+sean.allen@biamp.com
+
+--------------------------------------------------------------------------------
+
+References
+
+https://gstreamer.freedesktop.org/documentation/application-development/basics/bus.html?gi-language=c
+
+--------------------------------------------------------------------------------
+
+Advanced Pipeline Techniques
+
+https://gstreamer.freedesktop.org/documentation/application-development/advanced/pipeline-manipulation.html?gi-language=c
+
+In this example we have the following element chain:
+
+    - ----.     .----------.       .---- -
+element 1 |     | element2 |       | element3
+        src -> sink      src -> sink
+    - ----.     .----------.       .---- -
+
+We want to replace element 2 by element4 while the pipeline is in the PLAYING
+state. Let's say that element2 is a visualization and that you want to switch
+the visualization in the pipeline. 
+
+We can't just unlink element2's sinkpad from element1's source pad because that
+would leave element1's source pad unlinkekd and would cause a streaming error
+int he pipeline when data is pushed on the source pad. The technique is to block
+the dataflow from element1's source pad before we replace element2 by element4
+and then resume dataflow as shown in the following steps:
+  
+  - Block element1's source pad with a blocking pad probe. When the pad is
+    blocked, the probe callback will be called. 
+
+  - Inside the block callback nothing is flowing between element1 and element2
+    and nothing will flow until unblocked.
+
+  - Unlink element1 and element2
+
+  - Make sure data is flushed out of element2. Some elements might internally
+    keep some data, so you need to make sure not to lose any by forcing it out
+    of element2. You can do this by pushing EOS into the element2, like this:
+
+      - Put an event probe on element2's source pad.
+
+      - Send EOS to element2's sink pad. This makes sure that all the data
+        inside element2 is forced out.
+
+      - Wait for the EOS event to appear on element2's source pad. When the EOS
+        is received, drop it and remove the event probe.
+
+  - Unlink element2 and element3. you can now also remove element2 from the
+    pipeline and set the state to NULL.
+
+  - Add element 4 to the pipleine, if not already added. Link element4 and
+    element3. Link element 1 and element4.
+
+  - Make sure element4 is in the same state as the rest of the elements in the
+    pipeline. It should be at least in the PAUSED state before it can receive
+    buffers and events.
+
+  - Unblock element1's source pad probe. This will let new data into element4
+    and continue streaming
+
+The above algorithm works when the source pad is blocked, i.e.,w hen there is
+dataflow in the pipeline. If there is no dataflow, there is also no point in
+changing the element (just yet) so this algorithm can be used in the PAUSED
+state as well.
+
+This example changes the video effect on a simple pipeline once per second.
+

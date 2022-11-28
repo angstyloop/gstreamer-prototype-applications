@@ -1,0 +1,14 @@
+# binaries
+p0-0
+p0-1
+p0-2
+p0-3
+p1-0
+p1-1
+gstreamer-examples/serialization1
+gstreamer-examples/serialization2
+gstreamer-examples/serialization3
+gstreamer-examples/serialization4
+gstreamer-examples/serialization5
+gtk-examples/four-buttons-grid
+gtk-examples/packing-and-grid
